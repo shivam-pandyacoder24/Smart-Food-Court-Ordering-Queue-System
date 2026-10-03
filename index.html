@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Food Court: order ahead and follow your token</title>
+  <meta name="description" content="A college food-court website: browse the menu, place an order and follow your token through the kitchen queue. Built on hand-written data structures.">
+  <meta name="theme-color" content="#0e3b28">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:wght@400..700&display=swap">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a class="brand" href="#menu">Food Court</a>
+      <nav class="site-nav" aria-label="Main">
+        <a href="#menu" data-nav="menu">Menu</a>
+        <a href="#queue" data-nav="queue">Queue board</a>
+        <a href="#orders" data-nav="orders">My orders</a>
+        <a href="#structures" data-nav="structures">Data structures</a>
+      </nav>
+      <button class="tray-button" type="button" data-action="open-tray" aria-controls="tray">
+        Tray <span class="tray-button__count" id="tray-button-count">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- The token board: filled in by js/ui/board-view.js -->
+  <a class="serving" href="#queue" id="serving" aria-label="Token board. Open the queue board."></a>
+
+  <main id="main" tabindex="-1">
+
+    <!-- ============================== MENU ============================== -->
+    <section class="view" id="view-menu" data-view="menu" aria-labelledby="menu-title">
+      <div class="menu-layout">
+
+        <aside class="categories" id="categories" aria-label="Categories">
+          <button class="categories__toggle" type="button" data-action="toggle-categories" aria-expanded="false" aria-controls="category-tree">
+            <span>Category</span> <strong id="category-current">All items</strong>
+          </button>
+          <ul class="tree" id="category-tree"></ul>
+        </aside>
+
+        <div class="menu-main">
+          <h1 class="visually-hidden" id="menu-title">Menu</h1>
+
+          <form class="menu-tools" role="search" id="menu-tools">
+            <div class="search">
+              <label class="visually-hidden" for="search-input">Search the menu</label>
+              <input id="search-input" type="search" placeholder="Search dosa, chai, biryani" autocomplete="off"
+                     role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="search-suggestions">
+              <ul class="suggestions" id="search-suggestions" role="listbox" aria-label="Menu items" hidden></ul>
+            </div>
+            <label class="field field--inline">
+              <span>Sort by</span>
+              <select id="sort-select"></select>
+            </label>
+            <label class="check">
+              <input type="checkbox" id="veg-only">
+              <span>Veg only</span>
+            </label>
+          </form>
+
+          <div class="menu-heading">
+            <p class="breadcrumb" id="breadcrumb" aria-label="Category path"></p>
+            <p class="result-count" id="result-count" aria-live="polite"></p>
+          </div>
+
+          <ul class="menu-list" id="menu-list"></ul>
+          <p class="trace" id="menu-trace"></p>
+        </div>
+
+        <aside class="tray" id="tray" aria-labelledby="tray-title" tabindex="-1">
+          <div class="tray__head">
+            <h2 id="tray-title">Your tray</h2>
+            <button class="tray__close" type="button" data-action="close-tray" aria-label="Close tray">&times;</button>
+          </div>
+
+          <!-- Filled in by js/ui/tray-view.js -->
+          <div id="tray-confirmation"></div>
+          <div id="tray-contents"></div>
+
+          <form class="order-form" id="order-form" novalidate hidden>
+            <label class="field">
+              <span>Student ID</span>
+              <input id="customer-id" name="customer-id" autocomplete="off" placeholder="STU2041" maxlength="20" aria-describedby="order-error">
+            </label>
+            <label class="field">
+              <span>Name <small>optional</small></span>
+              <input id="customer-name" name="customer-name" autocomplete="given-name" maxlength="40">
+            </label>
+            <p class="form-error" id="order-error" role="alert"></p>
+            <button class="button button--primary button--wide" type="submit">Place order</button>
+          </form>
+        </aside>
+      </div>
+    </section>
+
+    <!-- =========================== QUEUE BOARD =========================== -->
+    <section class="view" id="view-queue" data-view="queue" aria-labelledby="queue-title" hidden>
+      <header class="view-head">
+        <div>
+          <h1 id="queue-title">Queue board</h1>
+          <p class="lead">Orders are cooked in the order they were placed. The kitchen cooks two at a time, and always takes the order at the front of the line.</p>
+        </div>
+        <div class="controls" id="kitchen-controls">
+          <label class="check">
+            <input type="checkbox" id="autopilot" checked>
+            <span>Kitchen autopilot</span>
+          </label>
+          <label class="check">
+            <input type="checkbox" id="rush">
+            <span>Lunch rush</span>
+          </label>
+          <button class="button" type="button" data-action="walk-in">Add a walk-in order</button>
+          <button class="button button--quiet" type="button" data-action="reset">Reset demo</button>
+        </div>
+      </header>
+      <p class="note">Demo clock: one kitchen minute passes every 2.5 seconds. Turn autopilot off to run the kitchen yourself with the buttons on each ticket.</p>
+      <div class="lanes" id="lanes"></div>
+    </section>
+
+    <!-- ============================ MY ORDERS ============================ -->
+    <section class="view" id="view-orders" data-view="orders" aria-labelledby="orders-title" hidden>
+      <header class="view-head">
+        <div>
+          <h1 id="orders-title">My orders</h1>
+          <p class="lead">Track one order by its number, or see everything a student has ordered.</p>
+        </div>
+      </header>
+      <div class="lookups">
+        <section class="lookup" aria-labelledby="track-title">
+          <h2 id="track-title">Track an order</h2>
+          <form class="lookup__form" id="track-form">
+            <label class="field">
+              <span>Order number</span>
+              <input id="track-input" inputmode="numeric" autocomplete="off" placeholder="1042" required>
+            </label>
+            <button class="button button--primary" type="submit">Track order</button>
+          </form>
+          <div id="track-result" tabindex="-1"></div>
+        </section>
+
+        <section class="lookup" aria-labelledby="history-title">
+          <h2 id="history-title">Order history</h2>
+          <form class="lookup__form" id="history-form">
+            <label class="field">
+              <span>Student ID</span>
+              <input id="history-input" autocomplete="off" placeholder="STU2041" required>
+            </label>
+            <button class="button button--primary" type="submit">Show history</button>
+          </form>
+          <div id="history-result" tabindex="-1"></div>
+        </section>
+      </div>
+    </section>
+
+    <!-- ========================= DATA STRUCTURES ========================= -->
+    <section class="view" id="view-structures" data-view="structures" aria-labelledby="structures-title" hidden>
+      <header class="view-head">
+        <div>
+          <h1 id="structures-title">Data structures</h1>
+          <p class="lead">Every feature of this site runs on a data structure written by hand. The right-hand side of each row shows what that structure holds right now, so place an order and watch it change.</p>
+        </div>
+        <label class="field field--inline">
+          <span>Example item</span>
+          <select id="example-item"></select>
+        </label>
+      </header>
+      <div class="structures" id="structures"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>A data structures and algorithms project. The orders are a simulation and are saved only in this browser.</p>
+    <p><a href="https://github.com/shivam-pandyacoder24/Smart-Food-Court-Ordering-Queue-System">Source code on GitHub</a></p>
+  </footer>
+
+  <div class="backdrop" id="backdrop" data-action="close-tray" hidden></div>
+  <p class="toast" id="toast" role="status" aria-live="polite"></p>
+
+  <!-- Data structures and algorithms, each written by hand -->
+  <script src="js/dsa/search.js"></script>
+  <script src="js/dsa/sort.js"></script>
+  <script src="js/dsa/linked-list.js"></script>
+  <script src="js/dsa/stack.js"></script>
+  <script src="js/dsa/queue.js"></script>
+  <script src="js/dsa/category-tree.js"></script>
+  <script src="js/dsa/bst.js"></script>
+  <script src="js/dsa/graph.js"></script>
+  <script src="js/dsa/hash-table.js"></script>
+
+  <!-- Sample data, then the food court logic that uses the structures above -->
+  <script src="js/data/menu.js"></script>
+  <script src="js/app/food-court.js"></script>
+
+  <!-- The pages -->
+  <script src="js/ui/dom.js"></script>
+  <script src="js/ui/menu-view.js"></script>
+  <script src="js/ui/tray-view.js"></script>
+  <script src="js/ui/board-view.js"></script>
+  <script src="js/ui/orders-view.js"></script>
+  <script src="js/ui/structures-view.js"></script>
+  <script src="js/ui/main.js"></script>
+</body>
+</html>

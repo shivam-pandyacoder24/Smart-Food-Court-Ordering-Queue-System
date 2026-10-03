@@ -1,0 +1,11 @@
+{
+  "name": "smart-food-court-ordering-queue-system",
+  "version": "1.0.0",
+  "description": "A college food-court website for browsing the menu, ordering and following your token through the kitchen queue. Built on hand-written data structures.",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test",
+    "start": "python3 -m http.server 8000"
+  }
+}
